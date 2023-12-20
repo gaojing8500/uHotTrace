@@ -13,7 +13,6 @@ def test_huggingface_trend():
     scrape_huggingface()
 
 
-
 if __name__ == "__main__":
     print("welcome hot trace")
-    test_huggingface_trend()
+    test_github_trend()

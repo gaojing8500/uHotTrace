@@ -1,5 +1,5 @@
 base_url: "https://arxiv.paperswithcode.com/api/v0/papers/"
-user_name: "Vincentqyw"
+user_name: "jackGao"
 repo_name: "cv-arxiv-daily"
 show_authors: True
 show_links: True
@@ -9,6 +9,7 @@ max_results: 10
 publish_readme: True
 publish_gitpage: True
 publish_wechat: False
+update_paper_links: False
 
 # file paths
 json_readme_path: './docs/cv-arxiv-daily.json'
@@ -24,36 +25,6 @@ keywords:
     "Artificial Intelligence":
         filters: ["Artificial Intelligence", "Computation and Language","Computer Vision and Pattern Recognition","Machine Learning","Computers and Society","Human-Computer Interaction"]
 
-#DailyPaperReport:
-#    "题目":""
-#    "作者/机构":""
-#    "论文链接":""
-#    "代码地址":""
-#    "解读":""
-#    "相关解读":""
-#
-#DailyGithubProjectReport:
-#    "项目名称":""
-#    "作者/机构":""
-#    "star":""
-#    "代码地址":""
-#    "项目简介":""
-#
-#DailyHuggingfaceModelReport:
-#    "模型仓库名":""
-#    "发布机构":""
-#    "下载量/收藏量/更新时间":""
-#    "模型下载地址":""
-#    "模型简要":""
-#    "相关解读":""
-#
-#DailyProductHuntTop:
-#    "产品名称":""
-#    "产品链接":""
-#    "团队":""
-#    "类别":""
-#    "产品解读":""
-#    "评论喜好":""
 
 
 

@@ -8,6 +8,7 @@ import requests
 from pyquery import PyQuery
 
 from gpt import get_gpt_model_predict
+from prompt import user_prompt_github_summary_instruct
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/20100101 Firefox/11.0',
@@ -39,7 +40,7 @@ def get_github_repo_description(link):
     for item in items:
         i = PyQuery(item)
         text = i.text()
-    predict = get_gpt_model_predict(text)
+    predict = get_gpt_model_predict(messages=text,instruct=user_prompt_github_summary_instruct,model='local')
     return predict
 
 

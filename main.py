@@ -15,4 +15,4 @@ def test_huggingface_trend():
 
 if __name__ == "__main__":
     print("welcome hot trace")
-    test_github_trend()
+    test_huggingface_trend()

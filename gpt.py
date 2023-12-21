@@ -3,7 +3,7 @@ import openai
 
 from prompt import web_analysise
 
-API_KEY = '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'
+API_KEY = 'xxxxx'
 openai.api_key = API_KEY
 
 system_prompt = [{"role": "system", "content": web_analysise['system']}]

@@ -5,7 +5,7 @@ from openai import OpenAI
 
 from prompt import web_analysise
 
-API_KEY = 'xxxx'
+API_KEY = 'xxxxx'
 client = OpenAI(api_key=API_KEY)
 
 system_prompt = [{"role": "system", "content": web_analysise['system']}]

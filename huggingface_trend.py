@@ -1,6 +1,7 @@
 import requests
 from pyquery import PyQuery
 
+from create_markdonw import create_markdown_output
 from gpt import get_gpt_model_predict
 from prompt import user_prompt_huggingface_summary_instruct
 
@@ -21,12 +22,12 @@ def insert_huggingface(repo_name,download_link,download_update_time,model_interp
         model_brief = get_gpt_model_predict(model_brief[0],user_prompt_huggingface_summary_instruct,model='local')
     author_or_organization = repo_name.split('/')[0]
     return {
-    "模型仓库名": repo_name,
-    "发布机构": author_or_organization,
-    "更新时间/下载量/收藏量": download_update_time,
-    "模型下载地址": link,
-    "模型简要": model_brief,
-    "相关解读": model_interprete
+    "repo_name": repo_name,
+    "author_or_organization": author_or_organization,
+    "download_update_time": download_update_time,
+    "link": link,
+    "model_brief": model_brief,
+    "model_interprete": model_interprete
     }
 
 def get_model_brief_information(model_link,type=None):
@@ -70,5 +71,20 @@ def scrape_huggingface():
             download_link = i('a.block').attr('href')
             result = insert_huggingface(repo_name,download_link,download_update_time)
             daily_huggingface_model_data_report.append(result)
+            to_markdown(daily_huggingface_model_data_report)
     return daily_huggingface_model_data_report
 
+
+def to_markdown(daily_huggingface_model_data_report):
+    filename = create_markdown_output("daily-model","Huggingface")
+    with open(filename, "w", encoding="utf-8") as f:
+        for daily_model_or_datasets_info in daily_huggingface_model_data_report:
+            repo_name =  daily_model_or_datasets_info['repo_name']
+            author_or_organization = daily_model_or_datasets_info['author_or_organization']
+            download_update_time = daily_model_or_datasets_info['download_update_time']
+            link = daily_model_or_datasets_info['link']
+            model_brief = daily_model_or_datasets_info['model_brief']
+            model_interprete = daily_model_or_datasets_info['model_interprete']
+            out = "### [{title}]({url})\n* author_or_organization:{author_or_organization}\n* download_update_time:{download_update_time}\n* model_brief: {model_brief}\n".format(
+                title=repo_name, url=link, author_or_organization=author_or_organization, download_update_time=download_update_time, model_brief=model_brief)
+            f.write(out)

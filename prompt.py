@@ -16,4 +16,4 @@ user_prompt_huggingface_summary_instruct = [{"role": "user", "content": "Please 
                                                                         "2、If the dataset is a card, a detailed analysis of the dataset size, usage instructions, and data sources is required"
                                                                         "3、Please use chinese response."}]
 user_prompt_github_summary_instruct = [{"role": "user", "content": "Please summarize the above article briefly,Please use chinese response."}]
-user_prompt_arxiv_summary_instruct = [{"role": "user", "content": "Please a brief summary above web content,Please use chinese response."}]
+user_prompt_arxiv_summary_instruct = [{"role": "user", "content": "Please summarize the above article briefly,Please use chinese response."}]

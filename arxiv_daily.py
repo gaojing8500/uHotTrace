@@ -14,6 +14,11 @@ import logging
 import argparse
 import datetime
 import requests
+from pyquery import PyQuery
+
+from create_markdonw import create_markdown_output
+from gpt import get_gpt_model_predict
+from prompt import user_prompt_arxiv_summary_instruct
 
 logging.basicConfig(format='[%(asctime)s %(levelname)s] %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -23,6 +28,12 @@ base_url = "https://arxiv.paperswithcode.com/api/v0/papers/"
 github_url = "https://api.github.com/search/repositories"
 arxiv_url = "http://arxiv.org/"
 
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/20100101 Firefox/11.0',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Encoding': 'gzip,deflate,sdch',
+    'Accept-Language': 'zh-CN,zh;q=0.8'
+}
 
 def load_config(config_file: str) -> dict:
     '''
@@ -103,24 +114,33 @@ def get_code_link(qword: str) -> str:
     return code_link
 
 
-def insert_daily_paper_report(update_time, paper_title, paper_author, primary_category, paper_url, abstract,repo_url=None,comment = None):
+def insert_daily_paper_report(update_time, paper_title, paper_author, primary_category, paper_url,repo_url=None,comment = None):
+    paper_web_info = paper_arxiv_web(paper_url)
+    interpreter_paper = get_gpt_model_predict(paper_web_info,user_prompt_arxiv_summary_instruct)
     return {
-        "题目": paper_title,
-        "作者/机构": paper_author,
-        "领域类别": primary_category,
-        "更新时间": update_time,
-        "论文链接": paper_url,
-        "代码地址": repo_url,
-        "Demo地址": comment,
-        "摘要": abstract,
-        "解读": "",
-        "相关解读": "",
+        "paper_title": paper_title,
+        "paper_author": paper_author,
+        "primary_category": primary_category,
+        "update_time": update_time,
+        "paper_url": paper_url,
+        "repo_url": repo_url,
+        "comment": comment,
+        "interprete": interpreter_paper,
+        "relative_interprete": "",
     }
 
 def get_comment(comment):
     if comment != None:
         return comment.split("Project Page: ")[1]
     return comment
+
+
+def paper_arxiv_web(arxiv_url):
+    r = requests.get(arxiv_url, headers=HEADERS)
+    assert r.status_code == 200
+
+    d = PyQuery(r.content)
+    return d.text()
 
 
 def get_daily_papers(topic, query="slam", max_results=2):
@@ -151,7 +171,7 @@ def get_daily_papers(topic, query="slam", max_results=2):
         primary_category = result.primary_category
         publish_time = result.published.date()
         update_time = result.updated.date()
-        comments = get_comment(result.comment)
+        # comments = get_comment(result.comment)
 
         logging.info(f"Time = {update_time} title = {paper_title} author = {paper_first_author}")
 
@@ -175,7 +195,7 @@ def get_daily_papers(topic, query="slam", max_results=2):
                     update_time, paper_title, paper_first_author, paper_key, paper_url, repo_url)
                 content_to_web[paper_key] = "- {}, **{}**, {} et.al., Paper: [{}]({}), Code: **[{}]({})**".format(
                     update_time, paper_title, paper_first_author, paper_url, paper_url, repo_url, repo_url)
-                daily_paper_report = insert_daily_paper_report(update_time, paper_title,paper_authors, primary_category, paper_url, paper_abstract,repo_url,comments)
+                daily_paper_report = insert_daily_paper_report(update_time, paper_title,paper_authors, primary_category, paper_url,repo_url)
                 daily_paper_report_list.append(daily_paper_report)
 
             else:
@@ -183,7 +203,7 @@ def get_daily_papers(topic, query="slam", max_results=2):
                     update_time, paper_title, paper_first_author, paper_key, paper_url)
                 content_to_web[paper_key] = "- {}, **{}**, {} et.al., Paper: [{}]({})".format(
                     update_time, paper_title, paper_first_author, paper_url, paper_url)
-                daily_paper_report = insert_daily_paper_report(update_time, paper_title,paper_authors, primary_category, paper_url, paper_abstract,repo_url,comments)
+                daily_paper_report = insert_daily_paper_report(update_time, paper_title,paper_authors, primary_category, paper_url,repo_url)
                 daily_paper_report_list.append(daily_paper_report)
 
             # TODO: select useful comments
@@ -200,6 +220,21 @@ def get_daily_papers(topic, query="slam", max_results=2):
     data_web = {topic: content_to_web}
     return data, data_web,daily_paper_report_list
 
+
+def to_markdown(daily_paper_report_list):
+    filename = create_markdown_output("daily-paper","Arxiv")
+    with open(filename, "w", encoding="utf-8") as f:
+        for daily_paper_info in daily_paper_report_list:
+            paper_title =  daily_paper_info['paper_title']
+            paper_author =  daily_paper_info['paper_author']
+            update_time = daily_paper_info['update_time']
+            paper_url = daily_paper_info['paper_url']
+            repo_url = daily_paper_info['repo_url']
+            interprete = daily_paper_info['interprete']
+            relative_interprete = daily_paper_info['relative_interprete']
+            out = "### [{title}]({url})\n* paper_author:{paper_author}\n* update_time:{update_time}\n* repo_url:{repo_url}\n* interprete: {interprete}\n".format(
+                title=paper_title, url=paper_url, paper_author=paper_author, update_time=update_time, repo_url=repo_url,interprete=interprete)
+            f.write(out)
 
 def update_paper_links(filename):
     '''
@@ -283,6 +318,8 @@ def update_json_file(filename, data_dict):
 
     with open(filename, "w") as f:
         json.dump(json_data, f)
+
+
 
 
 def json_to_md(filename, md_filename,
@@ -438,17 +475,19 @@ def get_daily_paper():
             print("\n")
         logging.info(f"GET daily papers end")
 
-    # 1. update README.md file
-    if publish_readme:
-        json_file = config['json_readme_path']
-        md_file = config['md_readme_path']
-        # update paper links
-        if config['update_paper_links']:
-            update_paper_links(json_file)
-        else:
-            # update json data
-            update_json_file(json_file, data_collector)
-        # json data to markdowns
-        json_to_md(json_file, md_file, task='Update Readme', \
-                   show_badge=show_badge)
+    to_markdown(daily_paper_report_list)
+
+    # # 1. update README.md file
+    # if publish_readme:
+    #     json_file = config['json_readme_path']
+    #     md_file = config['md_readme_path']
+    #     # update paper links
+    #     if config['update_paper_links']:
+    #         update_paper_links(json_file)
+    #     else:
+    #         # update json data
+    #         update_json_file(json_file, data_collector)
+    #     # json data to markdowns
+    #     json_to_md(json_file, md_file, task='Update Readme', \
+    #                show_badge=show_badge)
 

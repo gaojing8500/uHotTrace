@@ -6,6 +6,7 @@ from codecs import open
 import pandas as pd
 import requests
 from pyquery import PyQuery
+from create_markdonw import create_markdown_output
 
 from gpt import get_gpt_model_predict
 from prompt import user_prompt_github_summary_instruct
@@ -40,7 +41,7 @@ def get_github_repo_description(link):
     for item in items:
         i = PyQuery(item)
         text = i.text()
-    predict = get_gpt_model_predict(messages=text,instruct=user_prompt_github_summary_instruct,model='local')
+    predict = get_gpt_model_predict(messages=text,instruct=user_prompt_github_summary_instruct)
     return predict
 
 
@@ -76,7 +77,7 @@ def save_to_md(ds, filename, language, topk=5):
     df.reset_index(drop=True, inplace=True)
     df = df.head(topk)
     with open(filename, "a", "utf-8") as f:
-        f.write('\n### {language}\n'.format(language=language))
+        f.write('\n {language}\n'.format(language=language))
 
         for i in range(len(df)):
             title = df.iloc[i]['title']
@@ -87,17 +88,15 @@ def save_to_md(ds, filename, language, topk=5):
             new_star = df.iloc[i]['new_star']
             gpt_summary = df.iloc[i]['gpt_summary']
 
-            out = "* [{title}]({url}): {description} ***Star:{stars} Fork:{fork} Today stars:{new_star}***\n gpt_summary: {gpt_summary}***\n".format(
+            out = "### [{title}]({url})\n* Star:{stars}\n* Fork:{fork}\n* Today stars:{new_star}\n* Description: {gpt_summary}\n".format(
                 title=title, url=url, description=description, stars=star, fork=fork, new_star=new_star,gpt_summary=gpt_summary)
             f.write(out)
 
 
 def job():
-    today_str = datetime.datetime.now().strftime('%Y-%m-%d')
-    filename = 'markdowns/{date}.md'.format(date=today_str)
 
-    # create markdowns file
-    create_markdown(today_str, filename)
+    filename = create_markdown_output('github')
+
 
     # write markdowns
     scrape('', filename, topk=10)  # full_url = 'https://github.com/trending?since=daily'
